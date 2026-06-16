@@ -1,0 +1,102 @@
+services:
+  # ==========================================
+  # BASE DE DADOS: POSTGRESQL (Para o Auth-Service)
+  # ==========================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: medmetrics-postgres
+    environment:
+      POSTGRES_USER: meduser
+      POSTGRES_PASSWORD: medpassword
+      POSTGRES_DB: medmetrics_auth
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - medmetrics-network
+
+  # ==========================================
+  # BASE DE DADOS: MONGODB (Para o Analytics-Service)
+  # ==========================================
+  mongodb:
+    image: mongo:6.0
+    container_name: medmetrics-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - medmetrics-network
+
+  # ==========================================
+  # MICROSSERVIÇO: AUTH-SERVICE (Postgres + Sequelize)
+  # ==========================================
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: medmetrics-auth-service
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - DATABASE_URL=postgres://meduser:medpassword@postgres:5432/medmetrics_auth
+      - JWT_SECRET=chave_secreta_super_segura_medmetrics
+    restart: always
+    depends_on:
+      - postgres
+    networks:
+      - medmetrics-network
+
+  # ==========================================
+  # MICROSSERVIÇO: ANALYTICS-SERVICE (MongoDB + Mongoose)
+  # ==========================================
+  analytics-service:
+    build:
+      context: ./analytics-service
+      dockerfile: Dockerfile
+    container_name: medmetrics-analytics-service
+    volumes:
+      - ./analytics-service:/app 
+      - /app/node_modules
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - MONGO_URI=mongodb://mongodb:27017/medmetrics
+      - JWT_SECRET=chave_secreta_super_segura_medmetrics
+    restart: always
+    depends_on:
+      - mongodb
+    networks:
+      - medmetrics-network
+
+  # ==========================================
+  # FRONTEND: REACT + TAILWIND V4 (Servido via Nginx)
+  # ==========================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_AUTH_API_URL: http://localhost:3001/api
+        VITE_ANALYTICS_API_URL: http://localhost:3002/api
+    container_name: medmetrics-frontend
+    ports:
+      - "3000:80" # Acessível no seu Windows em http://localhost:3000
+    depends_on:
+      - auth-service
+      - analytics-service
+    networks:
+      - medmetrics-network
+
+# Volumes para persistência
+volumes:
+  postgres_data:
+  mongodb_data:
+
+# Rede interna isolada
+networks:
+  medmetrics-network:
+    driver: bridge

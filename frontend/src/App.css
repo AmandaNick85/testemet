@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+@theme {
+
+  /* Paleta Institucional DEGASE-RJ */
+  --color-degase-navy: oklch(28% 0.07 250);     /* Azul Escuro / Marinho */
+  --color-degase-blue: oklch(52% 0.18 250);     /* Azul Governamental */
+  --color-degase-gold: oklch(76% 0.15 85);      /* Dourado do Brasão */
+  --color-degase-light: oklch(97% 0.01 250);    /* Fundo de tela claro */
+
+  /* Fontes */
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Breakpoint customizado */
+  --breakpoint-3xl: 1920px;
+
+  /* Sombra customizada */
+  --shadow-card: 0 2px 8px oklch(0% 0 0 / 8%);
+}
