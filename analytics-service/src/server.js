@@ -5,10 +5,16 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const PORT = process.env.PORT || 3002;
-// O endereço 'mongodb' será o nome do serviço que vamos definir no Docker Compose
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://mongodb:27017/medmetrics';
+
+const MONGO_URI = process.env.MONGO_URI
+  || (process.env.NODE_ENV !== 'production' ? 'mongodb://mongodb:27017/medmetrics' : null);
 
 async function connectMongo() {
+  if (!MONGO_URI) {
+    console.error('❌ MONGO_URI não configurada. No Render, defina a connection string do MongoDB Atlas nas variáveis de ambiente.');
+    process.exit(1);
+  }
+
   try {
     mongoose.set('strictQuery', false);
     // Tenta ligar à base de dados NoSQL
