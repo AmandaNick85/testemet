@@ -21,8 +21,7 @@ services:
     name: medmetrics-analytics-service
     runtime: docker
     plan: free
-    dockerfilePath: ./analytics-service/Dockerfile
-    dockerContext: ./analytics-service
+    rootDir: analytics-service
     healthCheckPath: /health
 
     envVars:
@@ -39,8 +38,9 @@ services:
   - type: web
     name: medmetrics-frontend
     runtime: static
-    buildCommand: cd frontend && npm install && npm run build
-    staticPublishPath: ./frontend/dist
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
 
     routes:
       - type: rewrite
