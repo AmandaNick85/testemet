@@ -6,14 +6,33 @@ dotenv.config();
 
 const PORT = process.env.PORT || 3002;
 
-const MONGO_URI = process.env.MONGO_URI
-  || (process.env.NODE_ENV !== 'production' ? 'mongodb://mongodb:27017/medmetrics' : null);
+function resolveMongoUri() {
+  if (process.env.MONGO_URI?.trim()) {
+    return process.env.MONGO_URI.trim();
+  }
+
+  // No Render, exige MONGO_URI configurada no painel (Environment)
+  if (process.env.RENDER) {
+    return null;
+  }
+
+  // Fallback apenas para Docker Compose local
+  return 'mongodb://mongodb:27017/medmetrics';
+}
+
+const MONGO_URI = resolveMongoUri();
 
 async function connectMongo() {
   if (!MONGO_URI) {
-    console.error('❌ MONGO_URI não configurada. No Render, defina a connection string do MongoDB Atlas nas variáveis de ambiente.');
+    console.error('❌ MONGO_URI não configurada no Render.');
+    console.error('   Vá em: medmetrics-analytics-service → Environment → Add Variable');
+    console.error('   Key: MONGO_URI');
+    console.error('   Value: mongodb+srv://usuario:senha@cluster.mongodb.net/medmetrics');
     process.exit(1);
   }
+
+  const maskedUri = MONGO_URI.replace(/:([^:@/]+)@/, ':****@');
+  console.log(`🔌 MongoDB: ${maskedUri}`);
 
   try {
     mongoose.set('strictQuery', false);
